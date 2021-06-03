@@ -1,0 +1,13 @@
+%representacion
+%fecha [dd,mm,anno]
+
+%constructor
+%date(DD,MM,YYYY,F):- string(DD),string(MM),string(YYYY)
+
+%pertenencia
+%esFecha([DD,MM,YYYY]:-DD > 0,
+
+%verificaMes([DD,MM,YYYY]):- MM
+
+esPar?(numero):- numero = 1, !, true.
+esPar?(numero):- aux1 = numero/2, esPar?(aux1).
