@@ -243,3 +243,33 @@ esListaDeCompra(B), esArticulo(A),number(NvoPrecio),
 NvoPrecio > 0, string(NombreArt),
 cambiarPrecio(B,NombreArt,NvoPrecio,NvaCola).
 */
+
+estaEnLista(Elem,[Elem|_]):-!.
+estaEnLista(Elem,[_|Cola]):-estaEnLista(Elem,Cola).
+
+like(pedro,[pizza,sushi,astronomia]).
+like(maria,[caca,bailar,poker]).
+
+%compartenGusto([],[]):-false,!.
+% compartenGustos([Cabeza1|_],[Cabeza2|_],CONT):- Cabeza1 == Cabeza2,
+% CONT is CONT+2.
+%compartenGustos([Cabeza1|_],[_|Cola2]):-estaEnLista(Cabeza1,Cola2).
+% compartenGustos([Cabeza1|Cola1],[Cabeza2|Cola2],Cont):-Cabeza1\==Cabeza2,compartenGustos(Cola1,[Cabeza2|Cola2]).
+%
+
+match(Persona1,Persona2):-like(Persona1,Lista1),like(Persona2,Lista2),compartenGustos(Lista1,Lista2),!.
+
+
+
+compartenGustoCont(_,[],Out,Out):-!.
+%compartenGustoCont([_],[],CONT,AUX):-
+compartenGustoCont(Cabeza1,[Cabeza2|Cola2],CONT,AUX):- Cabeza1 == Cabeza2,Cont1 is CONT+1,compartenGustoCont(Cabeza1,Cola2,Cont1,AUX).
+
+compartenGustoCont(Cabeza1,[Cabeza2|Cola2],CONT,AUX):- Cabeza1\==Cabeza2,compartenGustoCont(Cabeza1,Cola2,CONT,AUX).
+
+
+aplicaComparten([],Lista,AUX,Out):-length(Lista,L), L=\=0, Out is 0+AUX,!.
+
+aplicaComparten([Cabeza1|Cola1],[Cabeza2|Cola2],CONT,AUX):-compartenGustoCont(Cabeza1,[Cabeza2|Cola2],0,CONT1),!,CONTAUX is CONT1+CONT, aplicaComparten(Cola1,[Cabeza2|Cola2],CONTAUX,AUX).
+
+cuantosComparten(Persona1,Persona2,Cuantos):-like(Persona1,Lista1),like(Persona2,Lista2),aplicaComparten(Lista1,Lista2,0,Cuantos).
