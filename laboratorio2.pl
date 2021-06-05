@@ -183,6 +183,9 @@ checkNameSN(Name):- Name == "facebook",!;
                     Name == "ig",!;
                     Name == "twitter",!;
                     Name == "tw".
+
+
+
 %Permite construir una tda socialnetwork
 %DOM: string x tda fecha x Output
 %Rec: tda socialNetwork
@@ -196,40 +199,97 @@ socialNetwork(Name,Date,SOut):- string(Name), esFecha(Date), checkNameSN(Name), 
 validaSocialNetwork([Name,Date,ListaUser,ListaPost]):-length([Name,Date,ListaUser,ListaPost],L), L==4,checkNameSN(Name),
                                                        esFecha(Date),is_list(ListaUser),is_list(ListaPost).
 
+%["Facebook",[1,3,2021],[],[]]
+/*############################Selectores Tda SocialNewtwork####################*/
+%Entrega el nombre un tda socialnetwork
+%DOM: tda SN
+%REC: string
+getNameSN(SN,Name):-validaSocialNetwork(SN), nth0(0,SN,Name).
+
+%Entrega el nombre un tda socialnetwork
+%DOM: tda SN
+%REC: tda Fecha
+getDateSN(SN,Fecha):-validaSocialNetwork(SN), nth0(1,SN,Fecha1), esFecha(Fecha1),Fecha1 = Fecha.
+
+%Entrega lista User un tda socialnetwork
+%DOM: tda SN
+% REC: list
+%  getUsersSN( ["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], []],USERS).
+/* ------------------------------------------------------------------------------------------------------------>! aqui es un or###*/
+getUsersSN(SN,ListaUser):-validaSocialNetwork(SN), nth0(2,SN,ListaUser1),length(ListaUser1,L),L==0,ListaUser = [],!;validaSocialNetwork(SN), nth0(2,SN,ListaUser1),
+validaListaUser(ListaUser1,Out),ListaUser=Out,!.
+
+%Cambia la lista de Usuarios por otra nueva
+%DOM: tda socialnetork,lista de elementos, output
+%REC: tda socialnetwork
+setUsersSN(SN,NewUsers,NewSN):-validaSocialNetwork(SN),setElemLista(2,SN,NewUsers,NewSN).
+
+
+
 
 /*TDA POST*/
-post(Usuario,Date,Contenido,Tipo,ListaUsers,PostID,Post):-validaUser(Usuario),esFecha(Date),publicacion(Contenido,Tipo,AUX1),
-                                                     validaContenido(AUX1),is_list(ListaUsers)/*verificarListaUser*/,number(PostID),
-                                                     Post = [Usuario,Date,Contenido,Tipo,ListaUsers,PostID].
+%Contruye el tda Post
+%DOM: tda user x tda date x string x lista tda user x int x Output
+%REC: tda post
+% post(["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],[04,06,2021],"Esto es un texto",[["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]],1,Post).
+post(Usuario,Date,Contenido,ListaUsers,PostID,Post):-validaUser(Usuario),esFecha(Date),
+                                                     validaContenido(Contenido),is_list(ListaUsers),/*verificarListaUser*/number(PostID),
+                                                     Post = [Usuario,Date,Contenido,ListaUsers,PostID].
 
 
 /*publicaEnUno(Sn,User,Date,Contenido,Tipo,SNOut):-validaSocialNetwork(Sn),validaUser(User),esFecha(Date),validaContenido(Contenido),
-                                            post(User,Date,Contenido,[],1 aqui debo hacer un length del lista post del user ).*/
-%Arma el contenido de una Publicacion ejemplo "SoyUnaFoto photo"
-%dom: string x string x OutPut
-%rec: lista
-publicacion(Contenido,Tipo,P):- P = [Contenido,Tipo].
+post(User,Date,Contenido,[],1 aqui debo hacer un length del lista post del user ).*/
+
+%Comprueba si un elemento cualquiera es tda post es valido o no
+%dom: cualquier elemento
+%rec: boolean
+validaPost([Usuario,Date,Contenido,ListaUsers,PostID]):- validaUser(Usuario),esFecha(Date),
+                                                     validaContenido(Contenido),is_list(ListaUsers),validaListaUser(ListaUsers,Aux_Users),!,is_list(Aux_Users),number(PostID).
+
+/*##########################SELECTORES TDA POST##################################*/
+%Selecciona el usuario creador del tda post
+%DOM: tda Post x output
+%REC: tda user
+getUserPost(Post,User):-validaPost(Post),nth0(0,Post,User).
+
+%Selecciona la fecha de creacion del post
+%DOM: tda post x output
+%REC: tda fecha
+getDatePost(Post,Date):-validaPost(Post),nth0(1,Post,Date).
+
+%Selecciona el contenido del post
+%DOM: tda post x output
+%REC: string
+getContenidoPost(Post,Contenido):-validaPost(Post),nth0(2,Post,Contenido).
+
+%Selecciona a lista de destinarios del post
+%DOM: tda post x output
+%REC: lista tda user
+getUsersPost(Post,Users):-validaPost(Post),nth0(3,Post,Users).
+
+%Selecciona el identificador del post
+%DOM: tda post x output
+%REC: int
+getIDPost(Post,IDPOST):-validaPost(Post),nth0(4,Post,IDPOST).
 
 
 %Valida el contenido de una publicacion
-%dom: publicacion
+%dom: contenido
 %rec: boolean
-validaContenido([Contenido,Tipo]):-string(Contenido), string(Tipo),
-                                 string_not_empty(Contenido),string_not_empty(Tipo),
-                                 Tipo == "text",!;
-                                 Tipo == "audio",!;
-                                 Tipo == "video",!;
-                                 Tipo == "url",!;
-                                 Tipo == "photo".
-%validaListaUser([],_).
+validaContenido(Contenido):-string(Contenido),string_not_empty(Contenido).
 
+% Valida que una lista contenga solo elementos Tda Usuarios validos y
+% devuelve la lista solo con usuarios correctos
+%dom: lista usuarios,output
+%rec: lista usuarios
 validaListaUser([],[]):-!.
 %validaListaUser(L,L).
 validaListaUser([User|ColaUser],[User|Result]):-validaUser(User),validaListaUser(ColaUser,Result).
 % validaListaUser([User|ColaUser],[User1|ColaUser]):-validaUser(User),validaListaUser(ColaUser,[User1,User|ColaUser]).
-%
-%
 validaListaUser([User|ColaUser],Out):-not(validaUser(User)),validaListaUser(ColaUser,Out).
+
+
+
 
 /*cambiarPrecio([A|B],NombreArt,NvoPrecio,[NvoArti|B]):-
 esListaDeCompra(B), esArticulo(A),number(NvoPrecio),
@@ -243,3 +303,77 @@ esListaDeCompra(B), esArticulo(A),number(NvoPrecio),
 NvoPrecio > 0, string(NombreArt),
 cambiarPrecio(B,NombreArt,NvoPrecio,NvaCola).
 */
+sn(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], []]).
+
+snConBobby(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
+
+%Se encarga de registrar un usuaio en
+%
+%
+socialNetworkRegister(Sn1,_,_,_,Sn2):-Sn1 == Sn2,!.
+socialNetworkRegister(Sn1,Fecha,Username,Password,Sn2):-validaSocialNetwork(Sn1),esFecha(Fecha),verificaUserName(Username),
+                                                         verificaPassword(Password),not(checkRegister(Username,Sn1)),
+                                                         user(Username,Password,Fecha,User),getUsersSN(Sn1,Users),
+                                                         append_final(Users,User,NewUsers),setUsersSN(Sn1,NewUsers,Sn2).%,Sn2 = OUT.
+
+/*
+ * Prueba que retorna true
+socialNetworkRegister(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], []],[04,06,1992],"BobbyParra","bobby123",["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
+
+* Prueba que retorna el Sn2
+socialNetworkRegister(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], []],[04,06,1992],"BobbyParra","bobby123",SN).
+                                                       */
+
+%Verifica que un nombre de Usuario sea no vacio y mayor a 6
+%DOM: string
+%REC: boolean
+verificaUserName(Username):-string_not_empty(Username),string_length(Username,Cont),Cont >=6.
+
+% Verifica que una password sea no vacia, mayor a 8 y que contenga al
+% menos 2 numeros
+%DOM: string
+%REC: boolean
+verificaPassword(Password):-string_not_empty(Password),string_length(Password,Cont),Cont >=8,
+                           lista_numeros(Lista_Numeros),tiene_numeros(Password,Lista_Numeros).
+
+% Verifica si un Username esta en la lista de usuarios de socialnetwork,
+%DOM: string x tda socialnetwork
+%REC: boolean
+checkRegister(Username,SN):-getUsersSN(SN,Users),getListaNames(Users,ListaString),member(Username,ListaString),!.
+
+%Entrega los nombres (strings) de una lista de usuarios
+%DOM: lista tda user x output
+%REC: lista string
+getListaNames([],[]):-true,!.
+getListaNames([X|Xs],[Name|Ys]):- getNameUser(X,Name),getListaNames(Xs,Ys).
+
+
+%es una lista de numeros en Ascii
+lista_numeros([49, 50, 51, 52, 53, 54, 55, 56, 57]).
+
+%Comprueba que un string tenga al menos 2 numeros
+%dom: string x lista numeros en ascii
+%rec: boolean
+tiene_numeros(String,Lista_Numeros):- string_to_list(String,List),comparten_elementos(List,Lista_Numeros,0,Cont),Cont >= 2.
+%Entrega cuantas veces un elemento está contenido en una lista
+%DOM: Elemento x Lista x 0 x Output
+%REc: int
+existe_en_lista(_,[],Out,Out):-true,!.
+existe_en_lista(Cabeza1,[Cabeza2|Cola2],CONT,AUX):- Cabeza1 == Cabeza2,Cont1 is CONT+1,existe_en_lista(Cabeza1,Cola2,Cont1,AUX).
+existe_en_lista(Cabeza1,[Cabeza2|Cola2],CONT,AUX):- Cabeza1\==Cabeza2,existe_en_lista(Cabeza1,Cola2,CONT,AUX).
+
+
+%Entrega cuantos elementos en comun tiene una lista con otra
+%DOM: Lista x Lista x 0 x Output
+%REC: int
+comparten_elementos([],Lista,AUX,Out):-length(Lista,L), L=\=0, Out is 0+AUX,!.
+comparten_elementos([Cabeza1|Cola1],[Cabeza2|Cola2],CONT,AUX):-existe_en_lista(Cabeza1,[Cabeza2|Cola2],0,CONT1),!,CONTAUX is CONT1+CONT, comparten_elementos(Cola1,[Cabeza2|Cola2],CONTAUX,AUX).
+
+
+
+
+%Agrega un elemento al final de una lista
+%DOM: lista x elemento x output
+%REC: lista
+append_final([],Elem,[Elem]).
+append_final([Cabeza1|Cola1],Elem,[Cabeza1|Cola2]):-append_final(Cola1,Elem,Cola2).
