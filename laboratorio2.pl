@@ -437,18 +437,25 @@ getIndex(Elem,[X|Xs],Aux,Cont):-Elem \= X, Aux1 is Aux + 1, getIndex(Elem,Xs,Aux
 
 %setElemLista(Index,Lista,NewElem,ListaOut)
 
-
+%Predicado que permite al usuario con sesion activa seguir a un usuario
+%DOM: tda socialNetwork,string,OutPut
+%REC: tda socialNetwork
+%
+%
 socialNetworkFollow(Sn1,Username,Sn2):- getUsersSN(Sn1,ListaUser),getUserOnline(ListaUser,UserOn),
-                                        getNameUser(UserOn,NameON),Username == NameON,!;
+                                        getNameUser(UserOn,NameON),Username \= NameON,
+
                                         getUsersSN(Sn1,ListaUser),getUserOnline(ListaUser,UserOn),
                                         validaSocialNetwork(Sn1),verificaUserName(Username),registradoEnSn(Username,Sn1),
                                         getUserConNombre(Username,ListaUser,Usuario),getUsersSN(Sn1,ListaUser),
                                         getAmigosUser(UserOn,AmigosUserOn),
                                         not(estaEnLista(Usuario,AmigosUserOn)),append_final(AmigosUserOn,Usuario,NewAmigosUserON),
-                                        setListaAmigosUser(UserOn,NewAmigosUserON,NewUserON),getIndex(UserOn,ListaUser,0,CONT),
-                                        setElemLista(CONT,ListaUser,NewUserON,NewListaUser),setUsersSN(Sn1,NewListaUser,Sn2).
+                                        setListaAmigosUser(UserOn,NewAmigosUserON,NewUserON),setEstadoUser(NewUserON,"offline",NewUserOFF),getIndex(UserOn,ListaUser,0,CONT),
+                                        setElemLista(CONT,ListaUser,NewUserOFF,NewListaUser),setUsersSN(Sn1,NewListaUser,Sn2).
 /*
 socialNetworkFollow(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []],"BobbyParra",SN),getUsersSN(SN,USER).*/
+
+
 % Predicado que veririfica que un string este registrado en la
 % socialnetwork
 %DOM: string x tda socialnetwork
