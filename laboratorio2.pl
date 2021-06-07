@@ -144,7 +144,11 @@ getEstadoUser(User,Estado):-validaUser(User), nth0(5,User,Estado).
 %DOM: tda user, string
 %REC: tda user
 setEstadoUser(User,NewEstado,NewUser):- validaUser(User),string(NewEstado),setElemLista(5,User,NewEstado,NewUser).
-
+% Predicado que se encarga de cambiar el perfil de un usaurio por uno
+% nuevo
+% DOM: tda User x list tda post x Output
+% REC: tda User
+setPerfilUser(User,NewPerfil,NewUser):-validaUser(User),setElemLista(3,User,NewPerfil,NewUser).
 % predicado que Se encarga de cambiar la lista de amigos de un tda
 % usuario
 %DOM: tda user, lista de amigos REC: tda user se agregó el "!"
@@ -222,13 +226,20 @@ getDateSN(SN,Fecha):-validaSocialNetwork(SN), nth0(1,SN,Fecha1), esFecha(Fecha1)
 getUsersSN(SN,ListaUser):-validaSocialNetwork(SN), nth0(2,SN,ListaUser1),length(ListaUser1,L),L==0,ListaUser = [],!;validaSocialNetwork(SN), nth0(2,SN,ListaUser1),
 validaListaUser(ListaUser1,Out),ListaUser=Out,!.
 
+%Predicado que entrega lista de post de un tda socialnetwork
+%DOM: tda sn
+%REC: list
+getPerfilSN(SN,Perfil):-validaSocialNetwork(SN),nth0(3,SN,Perfil).
+
 %predicado que Cambia la lista de Usuarios por otra nueva
-%DOM: tda socialnetork,lista de elementos, output
+%DOM: tda socialnetork x lista de elementos x output
 %REC: tda socialnetwork
 setUsersSN(SN,NewUsers,NewSN):-validaSocialNetwork(SN),setElemLista(2,SN,NewUsers,NewSN).
 
-
-
+%Predicado que cambia la lista de post por otra nueva
+%DOM: tda sn x lista elementos x output
+%
+setPerfilSN(SN,NewPerfil,NewSN):-validaSocialNetwork(SN),setElemLista(3,SN,NewPerfil,NewSN).
 
 /*TDA POST*/
 % predicado que Contruye el tda Post
@@ -291,6 +302,10 @@ validaListaUser([],[]):-!.
 validaListaUser([User|ColaUser],[User|Result]):-validaUser(User),validaListaUser(ColaUser,Result).
 % validaListaUser([User|ColaUser],[User1|ColaUser]):-validaUser(User),validaListaUser(ColaUser,[User1,User|ColaUser]).
 validaListaUser([User|ColaUser],Out):-not(validaUser(User)),validaListaUser(ColaUser,Out).
+
+
+
+
 
 
 
@@ -441,17 +456,20 @@ getIndex(Elem,[X|Xs],Aux,Cont):-Elem \= X, Aux1 is Aux + 1, getIndex(Elem,Xs,Aux
 %DOM: tda socialNetwork,string,OutPut
 %REC: tda socialNetwork
 %
-%
 socialNetworkFollow(Sn1,Username,Sn2):- getUsersSN(Sn1,ListaUser),getUserOnline(ListaUser,UserOn),
                                         getNameUser(UserOn,NameON),Username \= NameON,
-
                                         getUsersSN(Sn1,ListaUser),getUserOnline(ListaUser,UserOn),
                                         validaSocialNetwork(Sn1),verificaUserName(Username),registradoEnSn(Username,Sn1),
                                         getUserConNombre(Username,ListaUser,Usuario),getUsersSN(Sn1,ListaUser),
                                         getAmigosUser(UserOn,AmigosUserOn),
                                         not(estaEnLista(Usuario,AmigosUserOn)),append_final(AmigosUserOn,Usuario,NewAmigosUserON),
-                                        setListaAmigosUser(UserOn,NewAmigosUserON,NewUserON),setEstadoUser(NewUserON,"offline",NewUserOFF),getIndex(UserOn,ListaUser,0,CONT),
-                                        setElemLista(CONT,ListaUser,NewUserOFF,NewListaUser),setUsersSN(Sn1,NewListaUser,Sn2).
+                                        setListaAmigosUser(UserOn,NewAmigosUserON,NewUserON),
+                                        setEstadoUser(NewUserON,"offline",NewUserOFF),getIndex(UserOn,ListaUser,0,CONT),
+                                        setElemLista(CONT,ListaUser,NewUserOFF,NewListaUser),setUsersSN(Sn1,NewListaUser,Sn2),!.
+
+/*
+socialNetworkFollow(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []],"BobbyParra",SN),getUsersSN(SN,L),nth0(0,L,EM),getAmigosUser(EM,AMIGOS).
+                                        */
 /*
 socialNetworkFollow(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []],"BobbyParra",SN),getUsersSN(SN,USER).*/
 
@@ -480,3 +498,120 @@ getUserOnline([X|Xs],User):-getEstadoUser(X,Estado),Estado == "offline", getUser
 estaEnLista(Elem,[Elem|_]):-!.
 estaEnLista(Elem,[_|Cola]):-estaEnLista(Elem,Cola).
 
+% Predicado que entrega la lista de tda user en base a una lista de
+% usuarios registrados en el socialnetwork
+%
+%
+convierteListaUser(_,[],[]):-true,!.
+
+convierteListaUser(SN,[UserString|ColaString],[UserTda|ColaTda]):-getUsersSN(SN,ListaUser),
+                                                                  getUserConNombre(UserString,ListaUser,UserTda),
+                                                                  convierteListaUser(SN,ColaString,ColaTda).
+
+%aplica un sort, a convierteListaUser para no publicar 2 veces.
+
+% Predicado que verifica que un user(Amigo) este en la lista del User
+% DOM: tda user x tda user
+% REC: boolean
+esAmigo(User,Amigo):-validaUser(User),validaUser(Amigo),getAmigosUser(User,Amigos),estaEnLista(Amigo,Amigos).
+/*
+ esAmigo(["BenjaminParra", "benja123", [["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]).*/
+
+% Predicado que en base a una lista de TDA User obtiene una lista de los
+% nombres en string
+% DOM: Lista TDA User
+% REC: Lista string
+listaTdaUserToString([],[]):-true,!.
+listaTdaUserToString([User|ColaUsers],[Name|Xs]):-getNameUser(User,Name),listaTdaUserToString(ColaUsers,Xs).
+
+
+%Predicado que compara dos listas y solo deja sus elementos en comun
+%DOM: lista x lista x output
+%REC: lista
+%Se debe poner un ! para que solo de el final
+dejaIguales([],_,[]).
+dejaIguales([X|Xs],Lista,[X|OutCola]):-estaEnLista(X,Lista),
+                                       dejaIguales(Xs,Lista,OutCola).
+dejaIguales([X|Xs],Lista,OutCola):- not(estaEnLista(X,Lista)),
+                                    dejaIguales(Xs,Lista,OutCola).
+
+
+%Predicado que elimina el usuario online de una lista usuarios
+%DOM: Lista tda User x output
+%REC: lista tda user
+%
+eliminaOnline([X|Xs],[X|Ys]):-getEstadoUser(X,E),E=="offline",eliminaOnline(Xs,Ys).
+
+eliminaOnline([X|Xs],Y):-getEstadoUser(X,E),E=="online",eliminaOnline(Xs,Y).
+
+eliminaOnline([],[]):-!.
+
+
+
+/*
+socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
+                                                          getUsersSN(Sn1,ListaUser),listaTdaUserToString(ListaUser,ListaUserString),
+                                                          dejaIguales(ListaUserNameDest,ListaUserString,DestRegistrados),!,
+                                                          convierteListaUser(Sn1,DestRegistrados,DestRegistradosTda)
+                                                          eliminaOnline(DestRegistradosTda,DestTdaSinOnline),!,
+                                                          .*/
+
+%Predicado que realiza la publicación en el propio perfil
+%DOM: tda sn x tda fecha x string x output
+%REC: tda sn
+publicaEnUno(Sn1,Fecha,Texto,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),getUsersSN(Sn1,ListaUser),
+                                     getUserOnline(ListaUser,UserOnline),getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),
+                                     PostID is Largo + 1,post(UserOnline,Fecha,Texto,[],PostID,Post),
+                                     agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,Post,SNAUX),
+                                     getIndex(UserOnline,ListaUser,0,Index),setEstadoUser(UserPost,"Offline",UserOff),
+                                     setElemLista(Index,ListaUser,UserOff,NewListaUser),setUsersSN(SNAUX,NewListaUser,SnOut)
+                                     %getIndex(User,ListaUser,0,Index),setElemLista(Index,ListaUser,User2,NewListaUser)
+                                    .
+
+%Predicado que agrega un post al perfil del usuario
+%DOM: tda user x tda post x output
+%REC: tda user
+agregaPostUser(User,Post,UserPost):-validaUser(User), getPerfilUser(User,Perfil),append_final(Perfil,Post,NewPerfil),
+                                    setPerfilUser(User,NewPerfil,UserPost).
+
+%Predicado que agrega un post a la lista de post del tda socialnetwork
+%DOM: tda sn x tda post x output
+%REC: tda sn
+agregaPostSN(Sn,Post,SnOut):-validaSocialNetwork(Sn),validaPost(Post),getPerfilSN(Sn,ListaPost),append_final(ListaPost,Post,NewListaPost),setPerfilSN(Sn,NewListaPost,SnOut).
+% Predicado auxiliar de predicado post, entrega la lista validada de a
+% que usuario se le puede publicar
+% DOM: tda SoccialNetwork x Lista string x output
+% REC: Lista tda user
+
+dejaListaDest(Sn1,ListaUserNameDest,ListaOut):-getUsersSN(Sn1,ListaUser),listaTdaUserToString(ListaUser,ListaUserString),
+                                                          dejaIguales(ListaUserNameDest,ListaUserString,DestRegistrados),!,
+                                                          convierteListaUser(Sn1,DestRegistrados,DestRegistradosTda),
+                                                          eliminaOnline(DestRegistradosTda,DestTdaSinOnline),
+                                                         getUserOnline(ListaUser,UserOnline),getAmigosUser(UserOnline,Amigos),
+                                                         dejaIguales(DestTdaSinOnline,Amigos,Lista),sort(Lista,ListaOut),
+                                                         !.
+
+
+
+ig(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [["BobbyParra","bobby123",[],[],[04,06,1992],"offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
+
+destino(["BobbyParra","ChiloParra","BobbyParra","caca","BenjaminParra","ChiloParra","ChiloParra"]).
+
+
+/*
+traduceUser(User):-getAmigosUser(User,ListaAmigos),lenght(ListaAmigos,L),L==0,
+                   getPerfilUser(User,ListaPost),length(ListaPost,LP),LP==0,
+                   getNameUser(User,Name),.*/
+
+traduceFecha(Fecha,FechaString):-getDD(Fecha,DD),getMM(Fecha,MM),getYYYY(Fecha,YY),
+                                atomics_to_string([DD, MM, YY], '/', FechaString) .
+
+%atomics_to_string([1, 4, 2021], '/', A),display(A).
+traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
+                           getContenidoPost(Post,Contenido),%getUsersPost(Post,ListaUserPost),
+                           %getIDPost(Post,PostID),
+                           traduceFecha(FechaPost,FechaStr),
+                           atomics_to_string(["El Usuario",Name, "ha publicado",Contenido,
+                                                                     "el día",FechaStr,"\n"],' ',PostStr).
+%ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),getPerfilSN(SN,Posts),nth0(0,Posts,Post),traducePost(Post,OUT).
+%Usuario,Date,Contenido,ListaUsers,PostID,Post
