@@ -680,10 +680,14 @@ traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name)
                                               '"',Contenido,'"',"\n",
                                               "Destinatarios:",UserDest,"\n"],' ',PostStr),!.
 
-
+%Predicado que convierte la lista de tda post a un string
+%DOM: Lista tda 
+%
 traduceListaPost([],String,String).
 traduceListaPost([Post|PostCola],String,StrOut):-traducePost(Post,PostStr),atomics_to_string([String,PostStr],Str),
                                                  traduceListaPost(PostCola,Str,StrOut).
+
+/*ig(Sn1),socialNetworkPost(Sn1,[08,06,2021],"Esto es un texto largo",["BobbyParra","ChiloParra"],Sn2),getPerfilSN(Sn2,Perfil),traduceListaPost(Perfil,"",STR),write(STR).*/
 
 
 /*       #####################ojo para construir lista de post o users

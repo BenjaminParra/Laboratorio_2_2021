@@ -223,8 +223,9 @@ getDateSN(SN,Fecha):-validaSocialNetwork(SN), nth0(1,SN,Fecha1), esFecha(Fecha1)
 % REC: list
 %  getUsersSN( ["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], []],USERS).
 /* ------------------------------------------------------------------------------------------------------------>! aqui es un or###*/
-getUsersSN(SN,ListaUser):-validaSocialNetwork(SN), nth0(2,SN,ListaUser1),length(ListaUser1,L),L==0,ListaUser = [],!;validaSocialNetwork(SN), nth0(2,SN,ListaUser1),
-validaListaUser(ListaUser1,Out),ListaUser=Out,!.
+getUsersSN(SN,ListaUser):-validaSocialNetwork(SN), nth0(2,SN,ListaUser).
+/*,length(ListaUser1,L),L==0,ListaUser = [],!;validaSocialNetwork(SN), nth0(2,SN,ListaUser1),
+validaListaUser(ListaUser1,Out),ListaUser=Out,!.*/
 
 %Predicado que entrega lista de post de un tda socialnetwork
 %DOM: tda sn
@@ -548,13 +549,17 @@ eliminaOnline([],[]):-!.
 
 
 
-/*
-socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
-                                                          getUsersSN(Sn1,ListaUser),listaTdaUserToString(ListaUser,ListaUserString),
-                                                          dejaIguales(ListaUserNameDest,ListaUserString,DestRegistrados),!,
-                                                          convierteListaUser(Sn1,DestRegistrados,DestRegistradosTda)
-                                                          eliminaOnline(DestRegistradosTda,DestTdaSinOnline),!,
-                                                          .*/
+% Predicado que realiza la publicacion de un usuario Online a una lista
+% usuarios que son sus amigos o en su propio perfil
+% DOM: tda socialnetwork x tda fecha x string x lista string x Output
+% REC: tda socialnetwork
+socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- length(ListaUserNameDest,L),L==0,
+                                                           publicaEnUno(Sn1,Fecha,Texto,Sn2),!.
+socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- length(ListaUserNameDest,L),L\=0,
+                                                           aplicaPublicaEnMuroUser(Sn1,Fecha,Texto,ListaUserNameDest,SnOut),
+                                                           turnOffSN(SnOut,Sn2).
+
+
 
 %Predicado que realiza la publicación en el propio perfil
 %DOM: tda sn x tda fecha x string x output
@@ -562,11 +567,56 @@ socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- validaSocialNetwork(S
 publicaEnUno(Sn1,Fecha,Texto,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),getUsersSN(Sn1,ListaUser),
                                      getUserOnline(ListaUser,UserOnline),getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),
                                      PostID is Largo + 1,post(UserOnline,Fecha,Texto,[],PostID,Post),
-                                     agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,Post,SNAUX),
-                                     getIndex(UserOnline,ListaUser,0,Index),setEstadoUser(UserPost,"Offline",UserOff),
-                                     setElemLista(Index,ListaUser,UserOff,NewListaUser),setUsersSN(SNAUX,NewListaUser,SnOut)
+                                     getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+1,
+                                     post(UserOnline,Fecha,Texto,[],PostIdSn,PostSN),
+                                     agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,PostSN,SNAUX),
+                                     getIndex(UserOnline,ListaUser,0,Index),setEstadoUser(UserPost,"offline",UserOff),
+                                     setElemLista(Index,ListaUser,UserOff,NewListaUser),setUsersSN(SNAUX,NewListaUser,SnOut),!.
                                      %getIndex(User,ListaUser,0,Index),setElemLista(Index,ListaUser,User2,NewListaUser)
-                                    .
+
+
+/*
+ ig(Sn1),getUsersSN(Sn1,ListaUser),getUserOnline(ListaUser,UserOnline),getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),PostID is Largo+1,post(UserOnline,[2,4,2021],"Hola",[],PostID,Post),getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+1,post(UserOnline,[2,4,2021],"Hola",[],PostIdSn,PostSn),agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,PostSn,SNAUX),getIndex(UserOnline,ListaUser,0,Index),setEstadoUser(UserPost,"Offline",UserOff),setElemLista(Index,ListaUser,UserOff,NewListaUser),setUsersSN(SNAUX,NewListaUser,Snout).
+
+                                     */
+
+%Predicado que realiza la publicacion en el perfil de un amigo
+%DOM: tda sn x tda fecha x string x string x output
+%REC: tda sn
+
+publicaEnMuroUser(Sn1,Fecha,Texto,UserReceptor,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
+                                               getUsersSN(Sn1,ListaUser),getUserOnline(ListaUser,UserOnline),
+                                               getUserConNombre(UserReceptor,ListaUser,ReceptorTda),esAmigo(UserOnline,ReceptorTda),
+                                               getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),PostID is Largo + 1,
+                                               post(UserOnline,Fecha,Texto,[ReceptorTda],PostID,Post),
+                                               getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+1,
+                                               post(UserOnline,Fecha,Texto,[ReceptorTda],PostIdSn,PostSN),
+                                               agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,PostSN,SNAUX),
+                                               getIndex(UserOnline,ListaUser,0,Index),%setEstadoUser(UserPost,"offline",UserOff),
+                                               setElemLista(Index,ListaUser,UserPost,NewListaUser),
+                                               setUsersSN(SNAUX,NewListaUser,SnOut).
+/*ig(Sn1),publicaEnMuroUser(Sn1,[08,06,2021],"Hola compa","BobbyParra",SnOut),getPerfilSN(SnOut,Perfil),nth0(0,Perfil,Post),traducePost(Post,PostStr),write(PostStr).*/
+
+
+% Predicado que se encarga de aplicar el publicaEnMuroUser a una lista
+% de string
+%
+%
+aplicaPublicaEnMuroUser(SnOut,_,_,[],SnOut):-!.
+aplicaPublicaEnMuroUser(Sn1,Fecha,Texto,[X|Xs],SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
+                                                      publicaEnMuroUser(Sn1,Fecha,Texto,X,SNAUX),
+                                                      aplicaPublicaEnMuroUser(SNAUX,Fecha,Texto,Xs,SnOut).
+
+
+/* ig(Sn1),aplicaPublicaEnMuroUser(Sn1,[8,6,2021],"Hola Amigos",["ChiloParra","BobbyParra"],Snout),!,getPerfilSN(Snout,Perfil),nth0(0,Perfil,User1),nth0(1,Perfil,User2),traducePost(User1,STR1),traducePost(User2,STR2),write(STR1),write(STR2).*/
+
+
+/* ig(Sn1),aplicaPublicaEnMuroUser(Sn1,[8,6,2021],"Hola Amigos",["ChiloParra","BobbyParra"],Snout),getUsersSN(Snout,Users),nth0(0,Users,User1),getPerfilUser(User1,PerfilUser),nth0(0,PerfilUser,Post),traducePost(Post,STR),write(STR),nth0(1,PerfilUser,Post1),traducePost(Post1,STR1),write(STR1).
+*/
+
+
+%getUserConNombre(UserName,[User|ColaListaUser],Usuario)
+%esAmigo(User,Amigo)
 
 %Predicado que agrega un post al perfil del usuario
 %DOM: tda user x tda post x output
@@ -607,10 +657,59 @@ traduceFecha(Fecha,FechaString):-getDD(Fecha,DD),getMM(Fecha,MM),getYYYY(Fecha,Y
                                 atomics_to_string([DD, MM, YY], '/', FechaString) .
 
 %atomics_to_string([1, 4, 2021], '/', A),display(A).
+%
 traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
-                           getContenidoPost(Post,Contenido),%getUsersPost(Post,ListaUserPost),
-                           %getIDPost(Post,PostID),
+                           getContenidoPost(Post,Contenido),getUsersPost(Post,ListaUserPost),length(ListaUserPost,L),
+                           L==0,
+                           getIDPost(Post,PostID),
                            traduceFecha(FechaPost,FechaStr),
-                           atomics_to_string(["El Usuario",Name, "ha publicado",Contenido,
-                                                                     "el día",FechaStr,"\n"],' ',PostStr).
+                           atomics_to_string(["ID:",PostID,"\n",
+                                              "el día",FechaStr,Name,"publicó:","\n",
+                                              '"',Contenido,'"',"\n",
+                                              "Destinatarios: Su Perfil"],' ',PostStr),!.
+
+traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
+                           getContenidoPost(Post,Contenido),getUsersPost(Post,ListaUserPost),length(ListaUserPost,L),
+                           L\=0,
+                           getIDPost(Post,PostID),
+                           traduceFecha(FechaPost,FechaStr),
+                           listaTdaUserToString(ListaUserPost,ListaUserStr),
+                           nth0(0,ListaUserStr,UserDest),
+                           atomics_to_string(["ID:",PostID,"\n",
+                                              "el día",FechaStr,Name,"publicó:","\n",
+                                              '"',Contenido,'"',"\n",
+                                              "Destinatarios:",UserDest,"\n"],' ',PostStr),!.
+
+
+%ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),getPerfilSN(SN,Posts),nth0(0,Posts,Post),traducePost(Post,OUT).
 %Usuario,Date,Contenido,ListaUsers,PostID,Post
+/*
+ ID: 0
+El día 25/05/2021 “mmental” publicó:
+“este es un mensaje destinado a todos”
+Destinatarios: Todos
+
+*/
+
+%Predicado que cambia el estado de un tda user a offline
+%DOM: tda user x output
+%REC: tda user
+turnOffUser(User,UserOff):-validaUser(User),setEstadoUser(User,"offline",UserOff).
+
+
+% Predicado que cambia el estado de cada tda user a offline perteneciente
+% a una lista de tda user
+%DOM: lista tda user x output
+%REC: lista tda user
+
+turnOffLista([],[]).
+turnOffLista([User|UserCola],[UserOff|ColaOff]):-turnOffUser(User,UserOff),turnOffLista(UserCola,ColaOff).
+
+
+% Predicado que cambia el estado de todos los usuarios de un tda
+% socialnetwork a un estado offline
+%DOM: tda socialnetwork x output
+%REC: tda socialnetwork
+%
+turnOffSN(SN,SNOUT):-validaSocialNetwork(SN),getUsersSN(SN,ListaUser),turnOffLista(ListaUser,ListaOFF),
+                      setUsersSN(SN,ListaOFF,SNOUT).
