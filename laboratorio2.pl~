@@ -652,11 +652,17 @@ destino(["BobbyParra","ChiloParra","BobbyParra","caca","BenjaminParra","ChiloPar
 traduceUser(User):-getAmigosUser(User,ListaAmigos),lenght(ListaAmigos,L),L==0,
                    getPerfilUser(User,ListaPost),length(ListaPost,LP),LP==0,
                    getNameUser(User,Name),.*/
-
+%Predicado que transforma el tda fecha a una representacion en un string
+%DOM: tda fecha x Output
+%REC: string
 traduceFecha(Fecha,FechaString):-getDD(Fecha,DD),getMM(Fecha,MM),getYYYY(Fecha,YY),
                                 atomics_to_string([DD, MM, YY], '/', FechaString) .
 
 %atomics_to_string([1, 4, 2021], '/', A),display(A).
+%
+
+%Predicado que transforma el tda post a una representacion en un string
+%
 %
 traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
                            getContenidoPost(Post,Contenido),getUsersPost(Post,ListaUserPost),length(ListaUserPost,L),
@@ -679,6 +685,52 @@ traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name)
                                               "el día",FechaStr,Name,"publicó:","\n",
                                               '"',Contenido,'"',"\n",
                                               "Destinatarios:",UserDest,"\n"],' ',PostStr),!.
+
+%Predicado que se encarga de traducir la lista de post a un string
+%DOM: Lista, "", Output
+%REC: String
+traduceListaPost([],String,String).
+traduceListaPost([Post|PostCola],String,StrOut):-traducePost(Post,PostStr),atomics_to_string([String,PostStr],Str),
+                                                 traduceListaPost(PostCola,Str,StrOut).
+
+%Predicado que crea un tda PostShare
+%DOM: tda user x tda fecha x tda post x lista string x output
+%REC: tda PostShare
+postShare(User,Fecha,Post,ListaAmigos,PostShare):-
+                                                  PostShare=[User,Fecha,Post,ListaAmigos].
+% Predicado de pertencia que verifica que un elemento sea
+% del tipo tda postshare
+%DOM: elemento
+%REC: boolean
+validaPostShare([User,Fecha,Post,ListaAmigos]):-validaUser(User),esFecha(Fecha),validaPost(Post),is_list(ListaAmigos).
+/*############################################################Selectores PostShare##############################################*/
+
+%Predicado que obtiene el usuario creador del postShare
+%DOM: tda postShare x ouput
+%REC: tda User
+getUserPostShare(PostShare,UserPostShare):-validaPostShare(PostShare),nth0(0,PostShare,UserPostShare).
+
+
+%Predicado que obtiene la fecha del postShare
+%DOM: tda postShare x ouput
+%REC: tda fecha
+getFechaPostShare(PostShare,FechaPostShare):-validaPostShare(PostShare),nth0(1,PostShare,FechaPostShare).
+
+
+%Predicado que obtiene el tda post del tda postShare
+%DOM: tda postShare x ouput
+%REC: tda post
+getPostPostShare(PostShare,PostPostShare):-validaPostShare(PostShare),nth0(2,PostShare,PostPostShare).
+
+
+getUsersPostShare(PostShare,UsersPostShare):-validaPostShare(PostShare),nth0(3,PostShare,UsersPostShare).
+
+
+
+
+
+/*       #####################ojo para construir lista de post o users
+                           atomics_to_string(["hola","\n","chao"],Str),write(Str).*/
 
 
 %ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),getPerfilSN(SN,Posts),nth0(0,Posts,Post),traducePost(Post,OUT).
