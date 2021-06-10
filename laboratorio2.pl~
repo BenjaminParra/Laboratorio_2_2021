@@ -239,8 +239,13 @@ setUsersSN(SN,NewUsers,NewSN):-validaSocialNetwork(SN),setElemLista(2,SN,NewUser
 
 %Predicado que cambia la lista de post por otra nueva
 %DOM: tda sn x lista elementos x output
-%
+%REC: tda sn
 setPerfilSN(SN,NewPerfil,NewSN):-validaSocialNetwork(SN),setElemLista(3,SN,NewPerfil,NewSN).
+
+%Predicado que dado un id obtiene el post de un SN
+%DOM: tda sn x int x output
+%REC: tda post
+getPostSN(SN,ID,Post):-validaSocialNetwork(SN),getPerfilSN(SN,Perfil),nth0(ID,Perfil,Post).
 
 /*TDA POST*/
 % predicado que Contruye el tda Post
@@ -482,6 +487,9 @@ socialNetworkFollow(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", 
 %
 registradoEnSn(Username,Sn1):-getUsersSN(Sn1,ListaUser),getUserConNombre(Username,ListaUser,Usuario),
                                estaEnLista(Usuario,ListaUser).
+
+
+
 %Predicado que dado una lista de User entrega el que esta online
 %DOM: Lista tda User x Output
 %REC: tda User
@@ -567,7 +575,7 @@ socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- length(ListaUserNameD
 publicaEnUno(Sn1,Fecha,Texto,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),getUsersSN(Sn1,ListaUser),
                                      getUserOnline(ListaUser,UserOnline),getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),
                                      PostID is Largo + 1,post(UserOnline,Fecha,Texto,[],PostID,Post),
-                                     getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+1,
+                                     getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+0,
                                      post(UserOnline,Fecha,Texto,[],PostIdSn,PostSN),
                                      agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,PostSN,SNAUX),
                                      getIndex(UserOnline,ListaUser,0,Index),setEstadoUser(UserPost,"offline",UserOff),
@@ -587,9 +595,9 @@ publicaEnUno(Sn1,Fecha,Texto,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),str
 publicaEnMuroUser(Sn1,Fecha,Texto,UserReceptor,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
                                                getUsersSN(Sn1,ListaUser),getUserOnline(ListaUser,UserOnline),
                                                getUserConNombre(UserReceptor,ListaUser,ReceptorTda),esAmigo(UserOnline,ReceptorTda),
-                                               getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),PostID is Largo + 1,
+                                               getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),PostID is Largo + 0,
                                                post(UserOnline,Fecha,Texto,[ReceptorTda],PostID,Post),
-                                               getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+1,
+                                               getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+0,
                                                post(UserOnline,Fecha,Texto,[ReceptorTda],PostIdSn,PostSN),
                                                agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,PostSN,SNAUX),
                                                getIndex(UserOnline,ListaUser,0,Index),%setEstadoUser(UserPost,"offline",UserOff),
@@ -627,7 +635,8 @@ agregaPostUser(User,Post,UserPost):-validaUser(User), getPerfilUser(User,Perfil)
 %Predicado que agrega un post a la lista de post del tda socialnetwork
 %DOM: tda sn x tda post x output
 %REC: tda sn
-agregaPostSN(Sn,Post,SnOut):-validaSocialNetwork(Sn),validaPost(Post),getPerfilSN(Sn,ListaPost),append_final(ListaPost,Post,NewListaPost),setPerfilSN(Sn,NewListaPost,SnOut).
+agregaPostSN(Sn,Post,SnOut):-validaSocialNetwork(Sn),getPerfilSN(Sn,ListaPost),append_final(ListaPost,Post,NewListaPost),setPerfilSN(Sn,NewListaPost,SnOut).
+
 % Predicado auxiliar de predicado post, entrega la lista validada de a
 % que usuario se le puede publicar
 % DOM: tda SoccialNetwork x Lista string x output
@@ -643,9 +652,9 @@ dejaListaDest(Sn1,ListaUserNameDest,ListaOut):-getUsersSN(Sn1,ListaUser),listaTd
 
 
 
-ig(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [["BobbyParra","bobby123",[],[],[04,06,1992],"offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
+ig(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
 
-destino(["BobbyParra","ChiloParra","BobbyParra","caca","BenjaminParra","ChiloParra","ChiloParra"]).
+destino(["BobbyParra","ChiloParr","BobbyParra","caca","BenjaminParra","ChiloParra","ChiloParra"]).
 
 
 /*
@@ -722,10 +731,56 @@ getFechaPostShare(PostShare,FechaPostShare):-validaPostShare(PostShare),nth0(1,P
 %REC: tda post
 getPostPostShare(PostShare,PostPostShare):-validaPostShare(PostShare),nth0(2,PostShare,PostPostShare).
 
-
+%Predicado que obtiene la lista de usuarios (string) del tda postShare
+%DOM: tda postShare x output
+%REC: lista string
 getUsersPostShare(PostShare,UsersPostShare):-validaPostShare(PostShare),nth0(3,PostShare,UsersPostShare).
 
 
+%dejaListaDest(Sn1,ListaUserNameDest,ListaOut)
+socialNetworkShare(Sn1,Fecha,PostId,ListaUsernamesDest,Sn2):- validaSocialNetwork(Sn1),esFecha(Fecha),number(PostId),PostId >= 0,
+                                                              getUsersSN(Sn1,Users),
+                                                              getUserOnline(Users,UserOnline),getPostSN(Sn1,PostId,Post),
+                                                              length(ListaUsernamesDest,LDest),LDest == 0,
+                                                              postShare(UserOnline,Fecha,Post,[],PostShare),
+                                                              agregaPostUser(UserOnline,PostShare,UserPost),
+                                                              agregaPostSN(Sn1,PostShare,SNAUX),
+                                                             getIndex(UserOnline,Users,0,Index),
+                                                             %setEstadoUser(UserPost,"offline",UserOff),
+                                                             setElemLista(Index,Users,UserPost,NewListaUser),
+                                                             setUsersSN(SNAUX,NewListaUser,Sn2),!.
+
+socialNetworkShare(Sn1,Fecha,PostId,ListaUsernamesDest,Sn2):- validaSocialNetwork(Sn1),esFecha(Fecha),number(PostId),PostId >= 0,
+                                                              dejaListaDest(Sn1,ListaUsernamesDest,ListaAUX),
+                                                              listaTdaUserToString(ListaAUX,ListaOut),
+                                                              length(ListaOut,LDest),LDest > 0,
+                                                              aplicaShareToAmigo(Sn1,Fecha,PostId,ListaOut,Sn2),!.
+
+shareToAmigo(Sn1,Fecha,PostId,UserDest,Sn2):-validaSocialNetwork(Sn1),esFecha(Fecha),number(PostId),PostId >= 0,
+                                                       getUsersSN(Sn1,Users),
+                                                       getUserOnline(Users,UserOnline),getPostSN(Sn1,PostId,Post),
+                                                       getUserConNombre(UserDest,Users,ReceptorTda),
+                                                       esAmigo(UserOnline,ReceptorTda),
+                                                       postShare(UserOnline,Fecha,Post,[ReceptorTda],PostShare),
+                                                       agregaPostUser(UserOnline,PostShare,UserPost),
+                                                       agregaPostSN(Sn1,PostShare,SNAUX),
+                                                       getIndex(UserOnline,Users,0,Index),
+                                                       %setEstadoUser(UserPost,"offline",UserOff),
+                                                       setElemLista(Index,Users,UserPost,NewListaUser),
+                                                       setUsersSN(SNAUX,NewListaUser,Sn2).
+
+
+
+/*aplicaPublicaEnMuroUser(SnOut,_,_,[],SnOut):-!.
+aplicaPublicaEnMuroUser(Sn1,Fecha,Texto,[X|Xs],SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
+                                                      publicaEnMuroUser(Sn1,Fecha,Texto,X,SNAUX),
+                                                      aplicaPublicaEnMuroUser(SNAUX,Fecha,Texto,Xs,SnOut).*/
+aplicaShareToAmigo(SnOut,_,_,[],SnOut):-!.
+aplicaShareToAmigo(Sn1,Fecha,PostId,[X|Xs],Sn2):-validaSocialNetwork(Sn1),esFecha(Fecha),
+                                                 shareToAmigo(Sn1,Fecha,PostId,X,SNAUX),
+                                                 aplicaShareToAmigo(SNAUX,Fecha,PostId,Xs,Sn2).
+
+/*ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),socialNetworkLogin(SN,"BenjaminParra","benja123",SN2),shareToAmigo(SN2,[1,2,2021],0,"BobbyParra",SN3).*/
 
 
 
