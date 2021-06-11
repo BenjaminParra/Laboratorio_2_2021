@@ -574,7 +574,7 @@ socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- length(ListaUserNameD
 %REC: tda sn
 publicaEnUno(Sn1,Fecha,Texto,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),getUsersSN(Sn1,ListaUser),
                                      getUserOnline(ListaUser,UserOnline),getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),
-                                     PostID is Largo + 1,post(UserOnline,Fecha,Texto,[],PostID,Post),
+                                     PostID is Largo + 0,post(UserOnline,Fecha,Texto,[],PostID,Post),
                                      getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+0,
                                      post(UserOnline,Fecha,Texto,[],PostIdSn,PostSN),
                                      agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,PostSN,SNAUX),
@@ -652,7 +652,7 @@ dejaListaDest(Sn1,ListaUserNameDest,ListaOut):-getUsersSN(Sn1,ListaUser),listaTd
 
 
 
-ig(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
+ig(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], [], [8, 7, 1997], "online"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
 
 destino(["BobbyParra","ChiloParr","BobbyParra","caca","BenjaminParra","ChiloParra","ChiloParra"]).
 
@@ -681,7 +681,8 @@ traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name)
                            atomics_to_string(["ID:",PostID,"\n",
                                               "el día",FechaStr,Name,"publicó:","\n",
                                               '"',Contenido,'"',"\n",
-                                              "Destinatarios: Su Perfil"],' ',PostStr),!.
+                                              "Destinatarios: Su Perfil","\n"],' ',PostStr),!.
+
 
 traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
                            getContenidoPost(Post,Contenido),getUsersPost(Post,ListaUserPost),length(ListaUserPost,L),
@@ -694,6 +695,52 @@ traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name)
                                               "el día",FechaStr,Name,"publicó:","\n",
                                               '"',Contenido,'"',"\n",
                                               "Destinatarios:",UserDest,"\n"],' ',PostStr),!.
+
+
+traducePost(Post,PostStr):-length(Post,L),L == 4,getUserPostShare(Post,NamePostShare),getNameUser(NamePostShare,Name),
+                          getPostPostShare(Post,PostPostShare),postEnPalabra(PostPostShare,PostShareStr),
+                          getFechaPostShare(Post,FechaPostShare),traduceFecha(FechaPostShare,FechaStr),
+                          getUsersPostShare(Post,UsersPostShare),listaTdaUserToString(UsersPostShare,UserStr),
+                          nth0(0,UserStr,UserDest),
+                          atomics_to_string(["El día",FechaStr,Name,"compartió con",UserDest,"la publicación con",
+                                            PostShareStr,"\n"],' ', PostStr),!.
+
+
+traducePost(Post,PostStr):-length(Post,L),L == 4,getUserPostShare(Post,NamePostShare),getNameUser(NamePostShare,Name),
+                          getPostPostShare(Post,PostPostShare),postEnPalabra(PostPostShare,PostShareStr),
+                          getFechaPostShare(Post,FechaPostShare),traduceFecha(FechaPostShare,FechaStr),
+                          getUsersPostShare(Post,UsersPostShare),length(UsersPostShare,L2),L2==0,
+
+                          atomics_to_string(["El día",FechaStr,Name,"compartió en su perfil","la publicación con",
+                                            PostShareStr,"\n"],' ', PostStr),!.
+
+
+% Predicado que se utiliza para traducir un post cuando se intenta
+% traducir un PostShare
+% DOM: tda post, Output
+% REC: String
+postEnPalabra(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
+                           getContenidoPost(Post,Contenido),getUsersPost(Post,ListaUserPost),length(ListaUserPost,L),
+                           L==0,
+                           getIDPost(Post,PostID),
+                           traduceFecha(FechaPost,FechaStr),
+                           atomics_to_string(["ID:",PostID,"\n",
+                                              "el día",FechaStr,Name,"publicó:","\n",
+                                              '"',Contenido,'"',"\n",
+                                              "Destinatarios: Su Perfil"],' ',PostStr),!.
+
+postEnPalabra(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
+                           getContenidoPost(Post,Contenido),getUsersPost(Post,ListaUserPost),length(ListaUserPost,L),
+                           L\=0,
+                           getIDPost(Post,PostID),
+                           traduceFecha(FechaPost,FechaStr),
+                           listaTdaUserToString(ListaUserPost,ListaUserStr),
+                           nth0(0,ListaUserStr,UserDest),
+                           atomics_to_string(["ID:",PostID,"\n",
+                                              "el día",FechaStr,Name,"publicó:","\n",
+                                              '"',Contenido,'"',"\n",
+                                              "Destinatarios:",UserDest],' ',PostStr),!.
+
 
 %Predicado que se encarga de traducir la lista de post a un string
 %DOM: Lista, "", Output
@@ -738,6 +785,11 @@ getUsersPostShare(PostShare,UsersPostShare):-validaPostShare(PostShare),nth0(3,P
 
 
 %dejaListaDest(Sn1,ListaUserNameDest,ListaOut)
+%
+% Predicado que permite compartir una publicacion en el espacio propio o
+% en el de un o varios amigos
+% DOM: tda socialnetwork x tda fecha x int x lista string x output
+% REC: tda socialnetwork
 socialNetworkShare(Sn1,Fecha,PostId,ListaUsernamesDest,Sn2):- validaSocialNetwork(Sn1),esFecha(Fecha),number(PostId),PostId >= 0,
                                                               getUsersSN(Sn1,Users),
                                                               getUserOnline(Users,UserOnline),getPostSN(Sn1,PostId,Post),
@@ -748,14 +800,19 @@ socialNetworkShare(Sn1,Fecha,PostId,ListaUsernamesDest,Sn2):- validaSocialNetwor
                                                              getIndex(UserOnline,Users,0,Index),
                                                              %setEstadoUser(UserPost,"offline",UserOff),
                                                              setElemLista(Index,Users,UserPost,NewListaUser),
-                                                             setUsersSN(SNAUX,NewListaUser,Sn2),!.
+                                                             setUsersSN(SNAUX,NewListaUser,SnOut),
+                                                             turnOffSN(SnOut,Sn2),!.
 
 socialNetworkShare(Sn1,Fecha,PostId,ListaUsernamesDest,Sn2):- validaSocialNetwork(Sn1),esFecha(Fecha),number(PostId),PostId >= 0,
                                                               dejaListaDest(Sn1,ListaUsernamesDest,ListaAUX),
                                                               listaTdaUserToString(ListaAUX,ListaOut),
                                                               length(ListaOut,LDest),LDest > 0,
-                                                              aplicaShareToAmigo(Sn1,Fecha,PostId,ListaOut,Sn2),!.
+                                                              aplicaShareToAmigo(Sn1,Fecha,PostId,ListaOut,SnOut),
+                                                              turnOffSN(SnOut,Sn2),!.
 
+% predicado que permite compartir un post en el perfil de un amigo
+%DOM: tda socialnetwork x tda fecha x int x string x output
+%REC: tda socialnetwork
 shareToAmigo(Sn1,Fecha,PostId,UserDest,Sn2):-validaSocialNetwork(Sn1),esFecha(Fecha),number(PostId),PostId >= 0,
                                                        getUsersSN(Sn1,Users),
                                                        getUserOnline(Users,UserOnline),getPostSN(Sn1,PostId,Post),
@@ -776,6 +833,10 @@ shareToAmigo(Sn1,Fecha,PostId,UserDest,Sn2):-validaSocialNetwork(Sn1),esFecha(Fe
 aplicaPublicaEnMuroUser(Sn1,Fecha,Texto,[X|Xs],SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
                                                       publicaEnMuroUser(Sn1,Fecha,Texto,X,SNAUX),
                                                       aplicaPublicaEnMuroUser(SNAUX,Fecha,Texto,Xs,SnOut).*/
+
+%Predicado que comparte una publicacion en el muro de varios amigos
+%Dom: tda socialnetwork x tda fecha x int x lista string x output
+%Rec: tda socialnetwork
 aplicaShareToAmigo(SnOut,_,_,[],SnOut):-!.
 aplicaShareToAmigo(Sn1,Fecha,PostId,[X|Xs],Sn2):-validaSocialNetwork(Sn1),esFecha(Fecha),
                                                  shareToAmigo(Sn1,Fecha,PostId,X,SNAUX),
