@@ -331,7 +331,7 @@ cambiarPrecio(B,NombreArt,NvoPrecio,NvaCola).
 sn(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"]], []]).
 
 snConBobby(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [], [], [8, 7, 1997], "offline"],["ChiloParra", "chilo123", [], [], [28, 1, 1987], "offline"],["BobbyParra","bobby123",[],[],[04,06,1992],"offline"]], []]).
-
+%getUsersSN(SN5,Users),nth0(3,Users,User),traduceUser(User,STR),write(STR).
 %predicado que Se encarga de registrar un usuaio en tda SocialNetwork
 %DOM: tda SocialNetwork x Tda Fecha x string x string x Output
 %REC: tda SocialNetwork
@@ -574,7 +574,7 @@ socialNetworkPost(Sn1,Fecha,Texto,ListaUserNameDest,Sn2):- length(ListaUserNameD
 %REC: tda sn
 publicaEnUno(Sn1,Fecha,Texto,SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),getUsersSN(Sn1,ListaUser),
                                      getUserOnline(ListaUser,UserOnline),getPerfilUser(UserOnline,Perfil),length(Perfil,Largo),
-                                     PostID is Largo + 1,post(UserOnline,Fecha,Texto,[],PostID,Post),
+                                     PostID is Largo + 0,post(UserOnline,Fecha,Texto,[],PostID,Post),
                                      getPerfilSN(Sn1,PerfilSN),length(PerfilSN,Largo2),PostIdSn is Largo2+0,
                                      post(UserOnline,Fecha,Texto,[],PostIdSn,PostSN),
                                      agregaPostUser(UserOnline,Post,UserPost),agregaPostSN(Sn1,PostSN,SNAUX),
@@ -670,9 +670,10 @@ traduceFecha(Fecha,FechaString):-getDD(Fecha,DD),getMM(Fecha,MM),getYYYY(Fecha,Y
 %atomics_to_string([1, 4, 2021], '/', A),display(A).
 %
 
-%Predicado que transforma el tda post a una representacion en un string
-%
-%
+% Predicado que transforma el tda post o tda postshare a una
+% representacion en un string
+%DOM: tda postShare o tda post
+%REC: String
 traducePost(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Name),getDatePost(Post,FechaPost),
                            getContenidoPost(Post,Contenido),getUsersPost(Post,ListaUserPost),length(ListaUserPost,L),
                            L==0,
@@ -715,6 +716,68 @@ traducePost(Post,PostStr):-length(Post,L),L == 4,getUserPostShare(Post,NamePostS
                                             PostShareStr,"\n"],' ', PostStr),!.
 
 
+% Predicado que dado un tda usuario obtiene la lista de string de los
+% nombres de sus amigos
+% DOM: tda user x output
+% REC: lista string
+
+traduceAmigos(User,ListaAmigos):-validaUser(User),getAmigosUser(User,ListaAux),listaTdaUserToString(ListaAux,ListaAmigos).
+
+% Predicado que escribe la lista de amigos de un tda usuario en el
+% socialnetworkToString
+% DOM: lista string
+% REC: string
+traduceAmigosString([],String,String).
+traduceAmigosString([X|Xs],StringAux,String):-atomics_to_string([StringAux,"\n",X,"\n"],' ',Str),
+                                               traduceAmigosString(Xs,Str,String).
+
+%Predicado que convierte en un string el tda usuarios
+%DOM: tda usuario x output
+%REC: String
+traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPerfilUser(User,Perfil),getFechaUser(User,Fecha),
+                              traduceFecha(Fecha,FechaStr),getNameUser(User,Name),
+                              length(Amigos,LAmigos),LAmigos==0,length(Perfil,LPerfil),LPerfil==0,
+                              atomics_to_string([Name,"registrado el",FechaStr,"\n",
+                                                 "no tiene amigos y no ha realizado ninguna publicación.","\n"],' ',UserString),!.
+
+traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPerfilUser(User,Perfil),getFechaUser(User,Fecha),
+                              traduceFecha(Fecha,FechaStr),getNameUser(User,Name),
+                              length(Amigos,LAmigos),LAmigos==0,length(Perfil,LPerfil),LPerfil\=0,
+                              getPerfilUser(User,Perfil),traduceListaPost(Perfil,"",PerfilStr),
+                              atomics_to_string([Name,"registrado el",FechaStr,"\n",
+                                                 "No sigue a nadie","\n",
+                                                  "##########################################################","\n",
+                                                 "Su perfil contiene: ","\n",
+                                                 PerfilStr],' ',UserString),!.
+
+
+traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPerfilUser(User,Perfil),getFechaUser(User,Fecha),
+                              traduceFecha(Fecha,FechaStr),getNameUser(User,Name),
+                              traduceAmigos(User,ListaAmigos),traduceAmigosString(ListaAmigos,"",AmigosString),
+                              length(Amigos,LAmigos),LAmigos\=0,length(Perfil,LPerfil),LPerfil==0,
+                              atomics_to_string([Name,"registrado el",FechaStr,"\n",
+                                                 "sigue a:","\n",AmigosString,"\n",
+                                                 "Aún no ha realizado ninguna publicación.","\n"],' ',UserString),!.
+/*
+ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),socialNetworkLogin(SN,"BenjaminParra","benja123",SN2),socialNetworkShare(SN2,[1,2,2021],0,["BobbyParra","caca","ChiloParra"],SN3),socialNetworkLogin(SN3,"BenjaminParra","benja123",SN4),socialNetworkRegister(SN4,[6,8,2021],"BorisParra","boris123",SN5),socialNetworkLogin(SN5,"BorisParra","boris123",SN6),socialNetworkPost(SN6,[10,6,2021],"Primer post Boris",[],SN7),getUsersSN(SN7,Users),nth0(3,Users,User),traduceUser(User,STR),write(STR).                              */
+
+traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPerfilUser(User,Perfil),getFechaUser(User,Fecha),
+                              traduceFecha(Fecha,FechaStr),
+                              length(Amigos,LAmigos),LAmigos\=0,length(Perfil,LPerfil),LPerfil\=0,getNameUser(User,Name),
+                              traduceAmigos(User,ListaAmigos),traduceAmigosString(ListaAmigos,"",AmigosString),
+                              getPerfilUser(User,Perfil),traduceListaPost(Perfil,"",PerfilStr),
+                              atomics_to_string([Name," registrado el",FechaStr,"\n","sigue a:","\n",AmigosString,"\n",
+                                                 "##########################################################","\n",
+                                                 "Su perfil contiene: ","\n",
+                                                 PerfilStr],' ',UserString),!.
+
+
+traduceListaUser([],String,String).
+traduceListaUser([User|UserCola],String,StrOut):-traduceUser(User,UserStr),
+                                                 atomics_to_string([String,UserStr,"\n",
+                                                  "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%","\n"],Str),
+                                                 traduceListaUser(UserCola,Str,StrOut).
+
 % Predicado que se utiliza para traducir un post cuando se intenta
 % traducir un PostShare
 % DOM: tda post, Output
@@ -746,8 +809,10 @@ postEnPalabra(Post,PostStr):-getUserPost(Post,NamePost),getNameUser(NamePost,Nam
 %DOM: Lista, "", Output
 %REC: String
 traduceListaPost([],String,String).
-traduceListaPost([Post|PostCola],String,StrOut):-traducePost(Post,PostStr),atomics_to_string([String,PostStr],Str),
+traduceListaPost([Post|PostCola],String,StrOut):-traducePost(Post,PostStr),atomics_to_string([String,PostStr,"\n"],Str),
                                                  traduceListaPost(PostCola,Str,StrOut).
+
+
 
 %Predicado que crea un tda PostShare
 %DOM: tda user x tda fecha x tda post x lista string x output
