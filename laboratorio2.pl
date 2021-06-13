@@ -498,7 +498,24 @@ getUserOnline([X|_],User):-getEstadoUser(X,Estado),Estado == "online", User = X,
 
 getUserOnline([X|Xs],User):-getEstadoUser(X,Estado),Estado == "offline", getUserOnline(Xs,User).
 
+%Predicado que verifica si un usuario está online o no
+%DOM: TDA user
+%REC: Boolean
+estaOnline(User):-getEstadoUser(User,Estado),Estado=="online".
 
+
+%Predicado que verifica si existe un usuario online en una lista de user
+%DOM: Lista tda user
+%REC: boolean
+existeUserOnlineLista([]):-false,!.
+existeUserOnlineLista([X|_]):-estaOnline(X),!.
+existeUserOnlineLista([X|Xs]):-not(estaOnline(X)),existeUserOnlineLista(Xs).
+
+% Predicado que verifica si existe un usuario online en una tda
+% socialnetwork
+%DOM: tda socialnetwork
+%REC: boolean
+existeUserOnline(SN1):-getUsersSN(SN1,Users),existeUserOnlineLista(Users).
 
 % Predicado que verifica si un elemento esta en Lista, al momento de
 % encontrarlo retorna un true y si no existe en Lista false
@@ -657,18 +674,12 @@ ig(["instagram", [29, 2, 1992], [["BenjaminParra", "benja123", [["ChiloParra", "
 destino(["BobbyParra","ChiloParr","BobbyParra","caca","BenjaminParra","ChiloParra","ChiloParra"]).
 
 
-/*
-traduceUser(User):-getAmigosUser(User,ListaAmigos),lenght(ListaAmigos,L),L==0,
-                   getPerfilUser(User,ListaPost),length(ListaPost,LP),LP==0,
-                   getNameUser(User,Name),.*/
 %Predicado que transforma el tda fecha a una representacion en un string
 %DOM: tda fecha x Output
 %REC: string
 traduceFecha(Fecha,FechaString):-getDD(Fecha,DD),getMM(Fecha,MM),getYYYY(Fecha,YY),
                                 atomics_to_string([DD, MM, YY], '/', FechaString) .
 
-%atomics_to_string([1, 4, 2021], '/', A),display(A).
-%
 
 % Predicado que transforma el tda post o tda postshare a una
 % representacion en un string
@@ -738,17 +749,12 @@ traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPer
                               traduceFecha(Fecha,FechaStr),getNameUser(User,Name),
                               length(Amigos,LAmigos),LAmigos==0,length(Perfil,LPerfil),LPerfil==0,
                               atomics_to_string([Name,"registrado el",FechaStr,"\n",
-                                                 "no tiene amigos y no ha realizado ninguna publicación.","\n"],' ',UserString),!.
+                                                 "no tiene amigos","\n"],' ',UserString),!.
 
-traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPerfilUser(User,Perfil),getFechaUser(User,Fecha),
+traduceUser(User,UserString):-validaUser(User),getFechaUser(User,Fecha),
                               traduceFecha(Fecha,FechaStr),getNameUser(User,Name),
-                              length(Amigos,LAmigos),LAmigos==0,length(Perfil,LPerfil),LPerfil\=0,
-                              getPerfilUser(User,Perfil),traduceListaPost(Perfil,"",PerfilStr),
                               atomics_to_string([Name,"registrado el",FechaStr,"\n",
-                                                 "No sigue a nadie","\n",
-                                                  "##########################################################","\n",
-                                                 "Su perfil contiene: ","\n",
-                                                 PerfilStr],' ',UserString),!.
+                                                 "No sigue a nadie","\n"],' ',UserString),!.
 
 
 traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPerfilUser(User,Perfil),getFechaUser(User,Fecha),
@@ -756,19 +762,17 @@ traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPer
                               traduceAmigos(User,ListaAmigos),traduceAmigosString(ListaAmigos,"",AmigosString),
                               length(Amigos,LAmigos),LAmigos\=0,length(Perfil,LPerfil),LPerfil==0,
                               atomics_to_string([Name,"registrado el",FechaStr,"\n",
-                                                 "sigue a:","\n",AmigosString,"\n",
-                                                 "Aún no ha realizado ninguna publicación.","\n"],' ',UserString),!.
+                                                 "sigue a:","\n",AmigosString,"\n"],' ',UserString),!.
 
 
 traduceUser(User,UserString):-validaUser(User),getAmigosUser(User,Amigos),getPerfilUser(User,Perfil),getFechaUser(User,Fecha),
                               traduceFecha(Fecha,FechaStr),
                               length(Amigos,LAmigos),LAmigos\=0,length(Perfil,LPerfil),LPerfil\=0,getNameUser(User,Name),
                               traduceAmigos(User,ListaAmigos),traduceAmigosString(ListaAmigos,"",AmigosString),
-                              getPerfilUser(User,Perfil),traduceListaPost(Perfil,"",PerfilStr),
-                              atomics_to_string([Name," registrado el",FechaStr,"\n","sigue a:","\n",AmigosString,"\n",
-                                                 "##########################################################","\n",
-                                                 "Su perfil contiene: ","\n",
-                                                 PerfilStr],' ',UserString),!.
+
+
+                              atomics_to_string([Name," registrado el",FechaStr,"\n","sigue a:","\n",AmigosString,"\n"
+                                                ],' ',UserString),!.
 
 /*
 ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),socialNetworkLogin(SN,"BenjaminParra","benja123",SN2),socialNetworkShare(SN2,[1,2,2021],0,["BobbyParra","caca","ChiloParra"],SN3),socialNetworkLogin(SN3,"BenjaminParra","benja123",SN4),socialNetworkRegister(SN4,[6,8,2021],"BorisParra","boris123",SN5),socialNetworkLogin(SN5,"BorisParra","boris123",SN6),socialNetworkPost(SN6,[10,6,2021],"Primer post Boris",[],SN7),getUsersSN(SN7,Users),nth0(3,Users,User),traduceUser(User,STR),write(STR).                              */
@@ -782,6 +786,86 @@ traduceListaUser([User|UserCola],String,StrOut):-traduceUser(User,UserStr),
                                                  atomics_to_string([String,UserStr,"\n",
                                                   "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%","\n"],Str),
                                                  traduceListaUser(UserCola,Str,StrOut).
+/*
+traduceListaUserOff([],String,String).
+traduceListaUserOff([User|UserCola],Users,String,StrOut):- getNameUser(User,Name),getSeguidores(User,Users,Seguidores),
+                                                           traduceSeguidores(Seguidores,"",SeguidoresStr),
+                                                           atomics_to_string([String,Name,"\n",
+                                                                              "     Sigue a:","\n",
+                                                                              SeguidoresStr,"\n"],' ',STRAUX),
+                                                           traduceListaUserOff(UserCola,Users,STRAUX,StrOut).*/
+
+
+%traduceUserSeguidores(User,Users
+%Predicado que traduce lista de usuarios cuando no hay usuario online
+%DOM: Lista usuarios x lista usuarios x "" x output
+%REC: string
+traduceListaUserOff([],_,String,String).
+traduceListaUserOff([User|ColaUser],Users,String,StrOut):-traduceUserOff(User,Users,StrAUX),
+                                                           atomics_to_string([String,StrAUX,"\n",
+                                                                             "__________________________","\n"],
+                                                                             StrAUX2),
+                                                           traduceListaUserOff(ColaUser,Users,StrAUX2,StrOut).
+
+
+%Predicado que traduce un usuario cuando no hay usuario online
+%DOM: tda user x lista user x output
+%REC: String
+traduceUserOff(User,Users,UserSTR):-not(tieneSeguidores(User,Users)),getNameUser(User,Name),
+                                    getAmigosUser(User,Amigos),length(Amigos,LAMIGOS),LAMIGOS==0,
+                                     atomics_to_string([Name,"\n",
+                                                       "        No sigue a nadie","\n",
+                                                       "No es seguido por nadie","\n"
+                                                       ]," ", UserSTR),!.
+
+traduceUserOff(User,Users,UserSTR):-tieneSeguidores(User,Users),getNameUser(User,Name),
+                                    getAmigosUser(User,Amigos),length(Amigos,LAMIGOS),LAMIGOS==0,
+                                    getSeguidores(User,Users,Seguidores),
+                                    traduceSeguidores(Seguidores,"",SeguidoresStr),
+                                    atomics_to_string([Name,"\n",
+                                                       "        No sigue a nadie","\n","\n",
+                                                       "Es seguido por:","\n",
+                                                       SeguidoresStr]," ", UserSTR),!.
+
+
+traduceUserOff(User,Users,UserSTR):-not(tieneSeguidores(User,Users)),getNameUser(User,Name),
+                                    getAmigosUser(User,Amigos),length(Amigos,LAMIGOS),LAMIGOS\=0,
+
+                                    traduceAmigos(User,ListaAmigos),traduceAmigosString(ListaAmigos,"",AmigosString),
+
+                                    atomics_to_string([Name,"\n",
+                                             "     Sigue a:","\n",
+                                           AmigosString,"\n",
+                                           "No es seguido por nadie","\n","\n"]," ",UserSTR),!.
+
+traduceUserOff(User,Users,UserSTR):-tieneSeguidores(User,Users),getNameUser(User,Name),
+                                    getAmigosUser(User,Amigos),length(Amigos,LAMIGOS),LAMIGOS\=0,
+                                    getSeguidores(User,Users,Seguidores),
+                                    traduceAmigos(User,ListaAmigos),traduceAmigosString(ListaAmigos,"",AmigosString),
+                                    traduceSeguidores(Seguidores,"",SeguidoresStr),
+                                    atomics_to_string([Name,"\n",
+                                             "     Sigue a:","\n",
+                                           AmigosString,"\n",
+                                           "Es seguido por:","\n","\n",
+                                           SeguidoresStr]," ",UserSTR),!.
+
+
+
+
+%Predicado que verifica si un usuario tiene seguidores
+%DOM: tda user x lista tda user
+%REC: boolean
+tieneSeguidores(_,[]):-false,!.
+tieneSeguidores(User,[User1|_]):- getAmigosUser(User1,Amigos),estaEnLista(User,Amigos),!.
+
+tieneSeguidores(User,[User1|UserCola1]):- getAmigosUser(User1,Amigos),not(estaEnLista(User,Amigos)),
+                                          tieneSeguidores(User,UserCola1).
+
+
+traduceSeguidores([],String,String).
+traduceSeguidores([User|UserCola],String,StrOut):-atomics_to_string([String,User,"\n"],' ',StrAux),
+                                                  traduceSeguidores(UserCola,StrAux,StrOut).
+
 
 % Predicado que se utiliza para traducir un post cuando se intenta
 % traducir un PostShare
@@ -854,8 +938,6 @@ getPostPostShare(PostShare,PostPostShare):-validaPostShare(PostShare),nth0(2,Pos
 getUsersPostShare(PostShare,UsersPostShare):-validaPostShare(PostShare),nth0(3,PostShare,UsersPostShare).
 
 
-%dejaListaDest(Sn1,ListaUserNameDest,ListaOut)
-%
 % Predicado que permite compartir una publicacion en el espacio propio o
 % en el de un o varios amigos
 % DOM: tda socialnetwork x tda fecha x int x lista string x output
@@ -896,13 +978,7 @@ shareToAmigo(Sn1,Fecha,PostId,UserDest,Sn2):-validaSocialNetwork(Sn1),esFecha(Fe
                                                        setElemLista(Index,Users,UserPost,NewListaUser),
                                                        setUsersSN(SNAUX,NewListaUser,Sn2).
 
-/*
-                                                       ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),socialNetworkLogin(SN,"BenjaminParra","benja123",SN2),socialNetworkShare(SN2,[1,2,2021],0,["BobbyParra","cac","ChiloParra"],SN3),getPerfilSN(SN3,Perfil),length(Perfil,L).*/
 
-/*aplicaPublicaEnMuroUser(SnOut,_,_,[],SnOut):-!.
-aplicaPublicaEnMuroUser(Sn1,Fecha,Texto,[X|Xs],SnOut):-validaSocialNetwork(Sn1),esFecha(Fecha),string_not_empty(Texto),
-                                                      publicaEnMuroUser(Sn1,Fecha,Texto,X,SNAUX),
-                                                      aplicaPublicaEnMuroUser(SNAUX,Fecha,Texto,Xs,SnOut).*/
 
 %Predicado que comparte una publicacion en el muro de varios amigos
 %Dom: tda socialnetwork x tda fecha x int x lista string x output
@@ -912,23 +988,6 @@ aplicaShareToAmigo(Sn1,Fecha,PostId,[X|Xs],Sn2):-validaSocialNetwork(Sn1),esFech
                                                  shareToAmigo(Sn1,Fecha,PostId,X,SNAUX),
                                                  aplicaShareToAmigo(SNAUX,Fecha,PostId,Xs,Sn2).
 
-/*ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),socialNetworkLogin(SN,"BenjaminParra","benja123",SN2),shareToAmigo(SN2,[1,2,2021],0,"BobbyParra",SN3).*/
-
-
-
-/*       #####################ojo para construir lista de post o users
-                           atomics_to_string(["hola","\n","chao"],Str),write(Str).*/
-
-
-%ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Comelo",SN),getPerfilSN(SN,Posts),nth0(0,Posts,Post),traducePost(Post,OUT).
-%Usuario,Date,Contenido,ListaUsers,PostID,Post
-/*
- ID: 0
-El día 25/05/2021 “mmental” publicó:
-“este es un mensaje destinado a todos”
-Destinatarios: Todos
-
-*/
 
 %Predicado que cambia el estado de un tda user a offline
 %DOM: tda user x output
@@ -952,3 +1011,76 @@ turnOffLista([User|UserCola],[UserOff|ColaOff]):-turnOffUser(User,UserOff),turnO
 %
 turnOffSN(SN,SNOUT):-validaSocialNetwork(SN),getUsersSN(SN,ListaUser),turnOffLista(ListaUser,ListaOFF),
                       setUsersSN(SN,ListaOFF,SNOUT).
+
+
+
+%Predicado que convierte un tda socialnetwork a un string visible
+%DOM: Tda socialnetwork x output
+%REC: string
+
+socialNetworkToString(Sn1,StrOut):-not(existeUserOnline(Sn1)),getNameSN(Sn1,Name),
+                                   getDateSN(Sn1,Date),getPerfilSN(Sn1,Perfil),
+                                   traduceFecha(Date,DateStr),getUsersSN(Sn1,Users),
+                                   traduceListaUserOff(Users,Users,"",UserStr),
+                                   traduceListaPost(Perfil,"",PerfilSTR),
+                                  atomics_to_string(["#######Red Social",Name,"#######","\n",
+                                                       "Creada el día",DateStr,"\n",
+                                                     "*** Usuarios Registrados ***","\n",
+                                                     UserStr,"\n",
+                                                     "--------------------------------------------------","\n",
+                                                     "*** Publicaciones ***","\n",
+                                                     PerfilSTR,"\n",
+                                                     "*** Fin Publicaciones ***"],' ',StrOut),!.
+
+
+
+socialNetworkToString(Sn1,StrOut):-existeUserOnline(Sn1),getNameSN(Sn1,Name),getDateSN(Sn1,Date),
+                                   traduceFecha(Date,DateStr),
+                                   getUsersSN(Sn1,Users), getUserOnline(Users,UserOnline),
+                                   %getUsersSN(Sn1,Users),%getPerfilSN(Sn1,Perfil),
+                                   %getNameUser(UserOnline,NameUser),traduceAmigosString(UserOnline,"",AmigosSTR),
+                                   getPerfilUser(UserOnline,Perfil),traduceListaPost(Perfil,"",PerfilStr),
+                                    traduceUserOff(UserOnline,Users,UserString),
+                                    atomics_to_string(["#######Red Social",Name,"#######","\n",
+                                                       "Creada el día",DateStr,"\n",
+                                                       "*** Usuario con sesión iniciada ***","\n",
+                                                      UserString,"\n",
+                                                      "--------------------------------------------------","\n",
+                                                      "*** Su perfil contiene ***","\n",
+                                                      PerfilStr],' ',StrOut),!.
+
+
+/*ig(Sn1),publicaEnUno(Sn1,[6,6,2021],"Este es un post de prueba",SN),socialNetworkLogin(SN,"BenjaminParra","benja123",SN2),socialNetworkShare(SN2,[1,2,2021],0,["BobbyParra","caca","ChiloParra"],SN4),socialNetworkRegister(SN4,[6,8,2021],"BorisParra","boris123",SN5),socialNetworkLogin(SN5,"BorisParra","boris123",SN6),socialNetworkFollow(SN6,"BenjaminParra",SN7),socialNetworkToString(SN7,STR),write(STR).
+
+                                    */
+
+
+
+
+
+
+%Predicado que verifica si un usuario es seguidor de otro
+%DOM: Tda User x Lista Tda User
+%REC: boolean
+esSeguidor(User,ListaAmigos):-estaEnLista(User,ListaAmigos).
+
+%Predicado que obtiene el nombre del usuario seguidor
+%DOM: tda user x tda user x output
+%REC: string
+obtieneSeguidor(User,User2,UserOut):-validaUser(User),validaUser(User2),getAmigosUser(User2,AmigosUser),
+                                esSeguidor(User,AmigosUser),getNameUser(User2,UserOut).
+
+%Predicado que obtiene uan lista de seguidores
+%DOM:tda user x lista tda user x output
+%REC: lista string
+getSeguidores(_,[],[]):-!.
+
+getSeguidores(User,[Seguidor|ColaSeguidor],[X|Xs]):-getAmigosUser(Seguidor,AmigosSeguidor),
+                                                    esSeguidor(User,AmigosSeguidor),obtieneSeguidor(User,Seguidor,X),
+                                                    getSeguidores(User,ColaSeguidor,Xs).
+
+getSeguidores(User,[Seguidor|ColaSeguidor],Xs):-getAmigosUser(Seguidor,AmigosSeguidor),
+                                                not(esSeguidor(User,AmigosSeguidor)),
+                                                getSeguidores(User,ColaSeguidor,Xs).
+
+
